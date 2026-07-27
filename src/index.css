@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Pretendard", system-ui, "Segoe UI", Roboto, "Malgun Gothic", sans-serif;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: #fafaf8;
+  color: #1a1a1a;
+}
