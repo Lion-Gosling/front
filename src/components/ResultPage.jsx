@@ -1,6 +1,8 @@
-import { Smile, Frown, Meh, Check, Info, AlertTriangle, Lightbulb, ArrowRight } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Smile, Frown, Meh, AlertTriangle, CheckCircle2, ArrowRight } from 'lucide-react';
 import StepIndicator from './StepIndicator';
-import GaugeRing from './GaugeRing';
+import AssetBandChart from './AssetBandChart';
+import { getResultDetail } from '../lib/api';
 
 const GRADE_TONE = {
   green: { bg: 'bg-green-50', ring: 'bg-white/70', text: 'text-green-700', Icon: Smile },
@@ -8,30 +10,25 @@ const GRADE_TONE = {
   red: { bg: 'bg-red-50', ring: 'bg-white/70', text: 'text-red-700', Icon: Frown },
 };
 
-const REASON_ICON = {
-  check: { Icon: Check, bg: 'bg-green-100', text: 'text-green-600' },
-  info: { Icon: Info, bg: 'bg-green-100', text: 'text-green-600' },
-  warning: { Icon: AlertTriangle, bg: 'bg-gray-100', text: 'text-gray-500' },
-  tip: { Icon: Lightbulb, bg: 'bg-amber-100', text: 'text-amber-600' },
-};
-
-function burdenTone(tag) {
-  if (tag === '적정') return 'green';
-  if (tag === '주의') return 'amber';
-  return 'red';
-}
-
-function savingsTone(tag) {
-  if (tag === '양호') return 'green';
-  if (tag === '보통') return 'amber';
-  return 'red';
-}
-
-function goalTone(tag) {
-  return tag === '달성 가능' ? 'green' : 'red';
+function burdenBarTone(tag) {
+  if (tag === '적정') return 'bg-green-500';
+  if (tag === '주의') return 'bg-amber-500';
+  return 'bg-red-500';
 }
 
 export default function ResultPage({ form, result, onCheckSupport }) {
+  const [detail, setDetail] = useState(null);
+
+  useEffect(() => {
+    let alive = true;
+    getResultDetail(form, result).then((res) => {
+      if (alive) setDetail(res);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [form, result]);
+
   const tone = GRADE_TONE[result.grade.tone];
   const ToneIcon = tone.Icon;
 
@@ -62,84 +59,159 @@ export default function ResultPage({ form, result, onCheckSupport }) {
               : '현재 조건은 재정에 부담이 될 수 있어요'}
           </p>
           <p className="mt-1 text-sm text-gray-500">
-            현재 재정 상태에서 희망하는 주거 조건은 {result.grade.tone === 'green' ? '무리 없이 감당 가능한' : '주의가 필요한'} 수준입니다.
-          </p>
-          <p className="mt-1 text-sm text-gray-500">
             {form.region} · 보증금 {Number(form.deposit).toLocaleString()}만원 · 월세 {form.rent}만원
           </p>
         </div>
       </div>
 
-      <div className="mt-8 grid gap-6 sm:grid-cols-3">
-        <GaugeRing
-          percent={Math.min(result.housingBurdenRatio, 100)}
-          value={`${result.housingBurdenRatio.toFixed(1)}%`}
-          label="주거비 부담률"
-          tag={result.burdenTag}
-          tone={burdenTone(result.burdenTag)}
-          delay={0}
-        />
-        <GaugeRing
-          percent={Math.min(Math.max((result.monthlySavings / Number(form.income)) * 100, 0), 100)}
-          value={`${result.monthlySavings.toLocaleString()}만원`}
-          label="월 저축 가능"
-          tag={result.savingsTag}
-          tone={savingsTone(result.savingsTag)}
-          delay={0.12}
-        />
-        <GaugeRing
-          percent={
-            Number.isFinite(result.yearsToGoal)
-              ? Math.min(Math.max(100 - (result.yearsToGoal / Number(form.targetYears)) * 50, 0), 100)
-              : 0
-          }
-          value={Number.isFinite(result.yearsToGoal) ? `${result.yearsToGoal.toFixed(1)}년` : '∞'}
-          label="목표 달성 예상"
-          tag={result.goalTag}
-          tone={goalTone(result.goalTag)}
-          delay={0.24}
-        />
-      </div>
-
-      <div className="mt-8 grid gap-4 sm:grid-cols-3">
-        <div className="rounded-2xl border border-gray-100 bg-white p-6">
-          <div className="text-sm text-gray-400">월 주거비</div>
-          <div className="mt-2 text-2xl font-bold text-gray-900">
-            {result.monthlyHousingCost.toLocaleString()}만원
-          </div>
-          <div className="mt-1 text-xs text-gray-400">보증금 기회비용 포함</div>
-        </div>
-        <div className="rounded-2xl border border-gray-100 bg-white p-6">
-          <div className="text-sm text-gray-400">비상금 커버 기간</div>
-          <div className="mt-2 text-2xl font-bold text-gray-900">{result.emergencyMonths.toFixed(1)}개월</div>
-          <div className="mt-1 text-xs text-gray-400">현재 자산 기준</div>
-        </div>
-        <div className="rounded-2xl border border-gray-100 bg-white p-6">
-          <div className="text-sm text-gray-400">DTI (총부채상환비율)</div>
-          <div className="mt-2 text-2xl font-bold text-gray-900">{result.dti.toFixed(1)}%</div>
-          <div className="mt-1 text-xs text-gray-400">부채 없음 기준</div>
-        </div>
-      </div>
-
-      <div className="mt-10">
-        <h3 className="mb-4 text-lg font-bold text-gray-900">왜 이 결과가 나왔을까요?</h3>
-        <div className="space-y-3">
-          {result.reasons.map((reason) => {
-            const { Icon, bg, text } = REASON_ICON[reason.type];
-            return (
-              <div key={reason.title} className={`flex gap-4 rounded-xl ${bg} p-5`}>
-                <div className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${text}`}>
-                  <Icon size={16} strokeWidth={2.5} />
-                </div>
+      {!detail ? (
+        <div className="py-24 text-center text-sm text-gray-400">결과를 자세히 계산하는 중이에요…</div>
+      ) : (
+        <>
+          {detail.warning && (
+            <div className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-6">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="mt-0.5 shrink-0 text-amber-600" size={20} />
                 <div>
-                  <div className="font-semibold text-gray-900">{reason.title}</div>
-                  <p className="mt-1 text-sm text-gray-600">{reason.desc}</p>
+                  <p className="font-semibold text-amber-800">{detail.warning.message}</p>
+                  <p className="mt-1 text-sm text-amber-700">아래 결과는 이 조건 그대로 계산됐어요.</p>
+                  <p className="mt-3 text-xs text-amber-700">
+                    입력 월세: {detail.warning.inputRent}만원 &nbsp;|&nbsp; 시세 중앙값: {detail.warning.medianRent}
+                    만원 &nbsp;|&nbsp; {detail.warning.ratioPercent}% 수준
+                  </p>
                 </div>
               </div>
-            );
-          })}
-        </div>
-      </div>
+            </div>
+          )}
+
+          <div className="mt-8 grid gap-4 sm:grid-cols-3">
+            <div className="rounded-2xl border border-gray-100 bg-white p-6">
+              <div className="text-sm text-gray-400">목표 달성 확률 ({form.targetYears}년 시점)</div>
+              <div className="mt-2 text-3xl font-extrabold text-gray-900">{detail.goalProbability}%</div>
+              <p className="mt-2 text-xs leading-relaxed text-gray-500">
+                이대로면 {form.targetYears}년 안에 목표자산을 모을 가능성이{' '}
+                {detail.goalProbability >= 50 ? '반반보다 조금 높아요.' : '아직 낮은 편이에요.'}
+              </p>
+              <p className="mt-1 text-xs text-gray-400">
+                도중에 한 번이라도 목표를 넘어선 적 있는 확률: {detail.touchProbability}%
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-gray-100 bg-white p-6">
+              <div className="text-sm text-gray-400">주거비 부담률</div>
+              <div className="mt-2 text-3xl font-extrabold text-gray-900">
+                {result.housingBurdenRatio.toFixed(0)}%
+              </div>
+              <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
+                <div
+                  className={`h-full rounded-full ${burdenBarTone(result.burdenTag)}`}
+                  style={{ width: `${Math.min(result.housingBurdenRatio, 100)}%` }}
+                />
+              </div>
+              <p className="mt-2 text-xs text-gray-400">소득 대비 적정 구간 (30% 이하)</p>
+            </div>
+
+            <div className="rounded-2xl border border-gray-100 bg-white p-6">
+              <div className="text-sm text-gray-400">월 저축 가능액</div>
+              <div className="mt-2 text-3xl font-extrabold text-gray-900">
+                {result.monthlySavings.toLocaleString()}만원
+              </div>
+              <p className="mt-2 text-xs text-gray-400">월 소득 {Number(form.income).toLocaleString()}만원 기준</p>
+              <p className="mt-1 text-xs text-gray-400">DTI {result.dti.toFixed(0)}%</p>
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-gray-100 bg-white p-6">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <div className="text-sm text-gray-400">독립 시점 필요 목돈</div>
+                <div className="mt-2 text-2xl font-extrabold text-gray-900">
+                  {detail.requiredFunds.requiredFunds.toLocaleString()}만원
+                </div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-400">보유 현금</div>
+                <div className="mt-2 flex items-center gap-2 text-2xl font-extrabold text-gray-900">
+                  {detail.requiredFunds.cashOnHand.toLocaleString()}만원
+                  {detail.requiredFunds.sufficient && (
+                    <span className="flex items-center gap-1 rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">
+                      <CheckCircle2 size={14} />
+                      보유 현금 {detail.requiredFunds.cashOnHand.toLocaleString()}만원으로 충분해요
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 rounded-2xl border border-gray-100 bg-white p-6">
+            <h3 className="text-base font-bold text-gray-900">자산 형성 궤적</h3>
+            <p className="mt-1 text-xs text-gray-400">중앙값 선 + p5~p95 음영 밴드 + {detail.assetPath.renewalMonth}개월차 계약갱신 점표</p>
+            <div className="mt-6">
+              <AssetBandChart
+                horizonMonths={detail.assetPath.horizonMonths}
+                renewalMonth={detail.assetPath.renewalMonth}
+                median={detail.assetPath.median}
+                p5={detail.assetPath.p5}
+                p95={detail.assetPath.p95}
+              />
+            </div>
+            <p className="mt-2 text-xs text-gray-400">
+              계약 갱신월({detail.assetPath.renewalMonth}개월차)에 월세가 한 번 조정돼 곡선 기울기가 바뀌어요.
+            </p>
+          </div>
+
+          <div className="mt-10">
+            <h3 className="mb-4 text-lg font-bold text-gray-900">조건을 바꾸면 어떨까요</h3>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {detail.whatIfScenarios.map((s) => (
+                <div key={s.key} className="rounded-2xl border border-gray-100 bg-white p-6">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="text-sm text-gray-500">{s.label}</div>
+                    <span className="shrink-0 rounded-full bg-green-50 px-2.5 py-1 text-xs font-bold text-green-700">
+                      +{s.deltaPercentPoint}%p
+                    </span>
+                  </div>
+                  <div className="mt-2 text-3xl font-extrabold text-gray-900">{s.probability}%</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-10">
+            <h3 className="mb-1 text-lg font-bold text-gray-900">고민 중인 지역 비교</h3>
+            <p className="mb-4 text-sm text-gray-500">{form.region.split(' ')[1]}와 인접한 지역 중, 같은 조건으로 살 수 있는 곳만 비교했어요.</p>
+            <div className="space-y-3 rounded-2xl border border-gray-100 bg-white p-6">
+              <RegionBar
+                label={`${detail.regionComparison.current.region} 현재`}
+                percent={detail.regionComparison.current.probability}
+                tone="current"
+              />
+              {detail.regionComparison.neighbors.map((n) => (
+                <RegionBar key={n.region} label={n.region} percent={n.probability} tone="neighbor" />
+              ))}
+            </div>
+            {detail.regionComparison.excluded.length > 0 && (
+              <p className="mt-3 text-xs text-gray-400">
+                {detail.regionComparison.excluded.map((e) => `${e.region}은 ${e.reason}`).join(', ')} 비교에서
+                제외했어요.
+              </p>
+            )}
+          </div>
+
+          <div className="mt-10">
+            <h3 className="mb-4 text-lg font-bold text-gray-900">이 결과에 사용된 가정</h3>
+            <div className="grid gap-x-8 gap-y-2 rounded-2xl border border-gray-100 bg-white p-6 text-sm text-gray-500 sm:grid-cols-2">
+              {detail.assumptions.map((a) => (
+                <div key={a} className="flex gap-2">
+                  <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-gray-300" />
+                  <span>{a}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
 
       <div className="mt-10 flex justify-center">
         <button
@@ -150,6 +222,19 @@ export default function ResultPage({ form, result, onCheckSupport }) {
           놓치고 있는 지원제도 확인하기 <ArrowRight size={16} />
         </button>
       </div>
+    </div>
+  );
+}
+
+function RegionBar({ label, percent, tone }) {
+  const barColor = tone === 'current' ? 'bg-amber-400' : 'bg-teal-600/70';
+  return (
+    <div className="flex items-center gap-4">
+      <div className="w-28 shrink-0 text-sm font-medium text-gray-700">{label}</div>
+      <div className="h-9 flex-1 overflow-hidden rounded-full bg-gray-100">
+        <div className={`h-full rounded-full ${barColor}`} style={{ width: `${Math.min(percent, 100)}%` }} />
+      </div>
+      <div className="w-10 shrink-0 text-right text-sm font-bold text-gray-900">{percent}%</div>
     </div>
   );
 }
