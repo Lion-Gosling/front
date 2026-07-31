@@ -12,6 +12,7 @@ const DEFAULT_FORM = {
   income: '300',
   assets: '3500',
   expense: '130',
+  debt: '',
   region: '서울 마포구',
   deposit: '5000',
   rent: '50',

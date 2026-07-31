@@ -6,6 +6,10 @@ import { diagnose as diagnoseLocal } from './calculate';
 import { getSupportPrograms as getSupportProgramsLocal } from './supportPrograms';
 import { simulateScenarios as simulateScenariosLocal } from './simulate';
 import { getResultDetail as getResultDetailLocal } from './resultDetail';
+import {
+  getIncomeRecommendation as getIncomeRecommendationLocal,
+  getTargetAssetRecommendation as getTargetAssetRecommendationLocal,
+} from './recommend';
 
 export async function diagnose(form) {
   // 향후: return fetch('/api/diagnose', { method: 'POST', body: JSON.stringify(form) }).then((r) => r.json());
@@ -25,4 +29,14 @@ export async function getSimulation(form, result) {
 export async function getResultDetail(form, result) {
   // 향후: return fetch('/api/result-detail', { method: 'POST', body: JSON.stringify({ form, result }) }).then((r) => r.json());
   return getResultDetailLocal(form, result);
+}
+
+export async function getIncomeRecommendation(age) {
+  // 향후: return fetch(`/api/recommend/income?age=${age}`).then((r) => r.json());
+  return getIncomeRecommendationLocal(age);
+}
+
+export async function getTargetAssetRecommendation(age, income) {
+  // 향후: return fetch(`/api/recommend/target-asset?age=${age}&income=${income}`).then((r) => r.json());
+  return getTargetAssetRecommendationLocal(age, income);
 }
