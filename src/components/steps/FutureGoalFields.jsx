@@ -3,6 +3,7 @@ import { Lightbulb } from 'lucide-react';
 import FormField from './FormField';
 import RecommendationHeader from './RecommendationHeader';
 import RecommendedField from './RecommendedField';
+import FreeNoteField from './FreeNoteField';
 import { getTargetAssetRecommendation } from '../../lib/api';
 
 export default function FutureGoalFields({ form, setField }) {
@@ -55,6 +56,8 @@ export default function FutureGoalFields({ form, setField }) {
           사회초년생 기준 3~5년을 추천드려요
         </p>
       </div>
+
+      <FreeNoteField form={form} setField={setField} />
     </>
   );
 }

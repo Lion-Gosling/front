@@ -18,6 +18,8 @@ const DEFAULT_FORM = {
   rent: '50',
   targetAsset: '15000',
   targetYears: '5',
+  note: '',
+  noteInsight: null,
 };
 
 const PAGES = [

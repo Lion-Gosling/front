@@ -10,6 +10,7 @@ import {
   getIncomeRecommendation as getIncomeRecommendationLocal,
   getTargetAssetRecommendation as getTargetAssetRecommendationLocal,
 } from './recommend';
+import { analyzeFreeText as analyzeFreeTextLocal } from './nlp';
 
 export async function diagnose(form) {
   // 향후: return fetch('/api/diagnose', { method: 'POST', body: JSON.stringify(form) }).then((r) => r.json());
@@ -39,4 +40,9 @@ export async function getIncomeRecommendation(age) {
 export async function getTargetAssetRecommendation(age, income) {
   // 향후: return fetch(`/api/recommend/target-asset?age=${age}&income=${income}`).then((r) => r.json());
   return getTargetAssetRecommendationLocal(age, income);
+}
+
+export async function getTextInsight(text) {
+  // 향후: return fetch('/api/nlp/analyze', { method: 'POST', body: JSON.stringify({ text }) }).then((r) => r.json());
+  return analyzeFreeTextLocal(text);
 }
