@@ -1,14 +1,14 @@
-import { useEffect, useState } from 'react';
 import { Smile, Frown, Meh, AlertTriangle, CheckCircle2, ArrowRight } from 'lucide-react';
 import StepIndicator from './StepIndicator';
 import AssetBandChart from './AssetBandChart';
-import { getResultDetail } from '../lib/api';
 
 const GRADE_TONE = {
   green: { bg: 'bg-green-50', ring: 'bg-white/70', text: 'text-green-700', Icon: Smile },
   amber: { bg: 'bg-amber-50', ring: 'bg-white/70', text: 'text-amber-700', Icon: Meh },
   red: { bg: 'bg-red-50', ring: 'bg-white/70', text: 'text-red-700', Icon: Frown },
 };
+
+const SCORE_BREAKDOWN_LABELS = { goal: '목표달성', burden: '주거비부담', dti: 'DTI', cash: '초기자금' };
 
 function burdenBarTone(tag) {
   if (tag === '적정') return 'bg-green-500';
@@ -17,18 +17,6 @@ function burdenBarTone(tag) {
 }
 
 export default function ResultPage({ form, result, onCheckSupport }) {
-  const [detail, setDetail] = useState(null);
-
-  useEffect(() => {
-    let alive = true;
-    getResultDetail(form, result).then((res) => {
-      if (alive) setDetail(res);
-    });
-    return () => {
-      alive = false;
-    };
-  }, [form, result]);
-
   const tone = GRADE_TONE[result.grade.tone];
   const ToneIcon = tone.Icon;
 
@@ -64,21 +52,34 @@ export default function ResultPage({ form, result, onCheckSupport }) {
         </div>
       </div>
 
-      {!detail ? (
-        <div className="py-24 text-center text-sm text-gray-400">결과를 자세히 계산하는 중이에요…</div>
-      ) : (
-        <>
-          {detail.warning && (
+      <div className="mt-4 grid grid-cols-4 gap-3">
+        {Object.entries(SCORE_BREAKDOWN_LABELS).map(([key, label]) => (
+          <div key={key} className="rounded-xl border border-gray-100 bg-white p-3">
+            <div className="text-xs text-gray-400">{label}</div>
+            <div className="mt-1 text-lg font-bold text-gray-900">{result.scoreBreakdown[key]}</div>
+            <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-gray-100">
+              <div
+                className="h-full rounded-full bg-amber-400"
+                style={{ width: `${Math.min(Math.max(result.scoreBreakdown[key], 0), 100)}%` }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {result.warning && (
             <div className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-6">
               <div className="flex items-start gap-3">
                 <AlertTriangle className="mt-0.5 shrink-0 text-amber-600" size={20} />
                 <div>
-                  <p className="font-semibold text-amber-800">{detail.warning.message}</p>
+                  <p className="font-semibold text-amber-800">{result.warning.message}</p>
                   <p className="mt-1 text-sm text-amber-700">아래 결과는 이 조건 그대로 계산됐어요.</p>
-                  <p className="mt-3 text-xs text-amber-700">
-                    입력 월세: {detail.warning.inputRent}만원 &nbsp;|&nbsp; 시세 중앙값: {detail.warning.medianRent}
-                    만원 &nbsp;|&nbsp; {detail.warning.ratioPercent}% 수준
-                  </p>
+                  {result.warning.inputRent != null && (
+                    <p className="mt-3 text-xs text-amber-700">
+                      입력 월세: {result.warning.inputRent}만원 &nbsp;|&nbsp; 시세 중앙값: {result.warning.medianRent}
+                      만원 &nbsp;|&nbsp; {result.warning.ratioPercent}% 수준
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -87,13 +88,13 @@ export default function ResultPage({ form, result, onCheckSupport }) {
           <div className="mt-8 grid gap-4 sm:grid-cols-3">
             <div className="rounded-2xl border border-gray-100 bg-white p-6">
               <div className="text-sm text-gray-400">목표 달성 확률 ({form.targetYears}년 시점)</div>
-              <div className="mt-2 text-3xl font-extrabold text-gray-900">{detail.goalProbability}%</div>
+              <div className="mt-2 text-3xl font-extrabold text-gray-900">{result.goalProbability}%</div>
               <p className="mt-2 text-xs leading-relaxed text-gray-500">
                 이대로면 {form.targetYears}년 안에 목표자산을 모을 가능성이{' '}
-                {detail.goalProbability >= 50 ? '반반보다 조금 높아요.' : '아직 낮은 편이에요.'}
+                {result.goalProbability >= 50 ? '반반보다 조금 높아요.' : '아직 낮은 편이에요.'}
               </p>
               <p className="mt-1 text-xs text-gray-400">
-                도중에 한 번이라도 목표를 넘어선 적 있는 확률: {detail.touchProbability}%
+                도중에 한 번이라도 목표를 넘어선 적 있는 확률: {result.touchProbability}%
               </p>
             </div>
 
@@ -126,17 +127,17 @@ export default function ResultPage({ form, result, onCheckSupport }) {
               <div>
                 <div className="text-sm text-gray-400">독립 시점 필요 목돈</div>
                 <div className="mt-2 text-2xl font-extrabold text-gray-900">
-                  {detail.requiredFunds.requiredFunds.toLocaleString()}만원
+                  {result.requiredFunds.requiredFunds.toLocaleString()}만원
                 </div>
               </div>
               <div>
                 <div className="text-sm text-gray-400">보유 현금</div>
                 <div className="mt-2 flex items-center gap-2 text-2xl font-extrabold text-gray-900">
-                  {detail.requiredFunds.cashOnHand.toLocaleString()}만원
-                  {detail.requiredFunds.sufficient && (
+                  {result.requiredFunds.cashOnHand.toLocaleString()}만원
+                  {result.requiredFunds.sufficient && (
                     <span className="flex items-center gap-1 rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">
                       <CheckCircle2 size={14} />
-                      보유 현금 {detail.requiredFunds.cashOnHand.toLocaleString()}만원으로 충분해요
+                      보유 현금 {result.requiredFunds.cashOnHand.toLocaleString()}만원으로 충분해요
                     </span>
                   )}
                 </div>
@@ -146,25 +147,25 @@ export default function ResultPage({ form, result, onCheckSupport }) {
 
           <div className="mt-8 rounded-2xl border border-gray-100 bg-white p-6">
             <h3 className="text-base font-bold text-gray-900">자산 형성 궤적</h3>
-            <p className="mt-1 text-xs text-gray-400">중앙값 선 + p5~p95 음영 밴드 + {detail.assetPath.renewalMonth}개월차 계약갱신 점표</p>
+            <p className="mt-1 text-xs text-gray-400">중앙값 선 + p5~p95 음영 밴드 + {result.assetPath.renewalMonth}개월차 계약갱신 점표</p>
             <div className="mt-6">
               <AssetBandChart
-                horizonMonths={detail.assetPath.horizonMonths}
-                renewalMonth={detail.assetPath.renewalMonth}
-                median={detail.assetPath.median}
-                p5={detail.assetPath.p5}
-                p95={detail.assetPath.p95}
+                horizonMonths={result.assetPath.horizonMonths}
+                renewalMonth={result.assetPath.renewalMonth}
+                median={result.assetPath.median}
+                p5={result.assetPath.p5}
+                p95={result.assetPath.p95}
               />
             </div>
             <p className="mt-2 text-xs text-gray-400">
-              계약 갱신월({detail.assetPath.renewalMonth}개월차)에 월세가 한 번 조정돼 곡선 기울기가 바뀌어요.
+              계약 갱신월({result.assetPath.renewalMonth}개월차)에 월세가 한 번 조정돼 곡선 기울기가 바뀌어요.
             </p>
           </div>
 
           <div className="mt-10">
             <h3 className="mb-4 text-lg font-bold text-gray-900">조건을 바꾸면 어떨까요</h3>
             <div className="grid gap-4 sm:grid-cols-2">
-              {detail.whatIfScenarios.map((s) => (
+              {result.whatIfScenarios.map((s) => (
                 <div key={s.key} className="rounded-2xl border border-gray-100 bg-white p-6">
                   <div className="flex items-start justify-between gap-3">
                     <div className="text-sm text-gray-500">{s.label}</div>
@@ -183,17 +184,17 @@ export default function ResultPage({ form, result, onCheckSupport }) {
             <p className="mb-4 text-sm text-gray-500">{form.region.split(' ')[1]}와 인접한 지역 중, 같은 조건으로 살 수 있는 곳만 비교했어요.</p>
             <div className="space-y-3 rounded-2xl border border-gray-100 bg-white p-6">
               <RegionBar
-                label={`${detail.regionComparison.current.region} 현재`}
-                percent={detail.regionComparison.current.probability}
+                label={`${result.regionComparison.current.region} 현재`}
+                percent={result.regionComparison.current.probability}
                 tone="current"
               />
-              {detail.regionComparison.neighbors.map((n) => (
+              {result.regionComparison.neighbors.map((n) => (
                 <RegionBar key={n.region} label={n.region} percent={n.probability} tone="neighbor" />
               ))}
             </div>
-            {detail.regionComparison.excluded.length > 0 && (
+            {result.regionComparison.excluded.length > 0 && (
               <p className="mt-3 text-xs text-gray-400">
-                {detail.regionComparison.excluded.map((e) => `${e.region}은 ${e.reason}`).join(', ')} 비교에서
+                {result.regionComparison.excluded.map((e) => `${e.region}은 ${e.reason}`).join(', ')} 비교에서
                 제외했어요.
               </p>
             )}
@@ -202,7 +203,7 @@ export default function ResultPage({ form, result, onCheckSupport }) {
           <div className="mt-10">
             <h3 className="mb-4 text-lg font-bold text-gray-900">이 결과에 사용된 가정</h3>
             <div className="grid gap-x-8 gap-y-2 rounded-2xl border border-gray-100 bg-white p-6 text-sm text-gray-500 sm:grid-cols-2">
-              {detail.assumptions.map((a) => (
+              {result.assumptions.map((a) => (
                 <div key={a} className="flex gap-2">
                   <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-gray-300" />
                   <span>{a}</span>
@@ -210,8 +211,6 @@ export default function ResultPage({ form, result, onCheckSupport }) {
               ))}
             </div>
           </div>
-        </>
-      )}
 
       <div className="mt-10 flex justify-center">
         <button

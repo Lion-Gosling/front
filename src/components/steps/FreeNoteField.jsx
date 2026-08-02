@@ -1,29 +1,46 @@
 import { useRef, useState } from 'react';
-import { Sparkles, Loader2, CheckCircle2 } from 'lucide-react';
+import { Sparkles, Loader2, CircleSlash2 } from 'lucide-react';
+import EventCard from './EventCard';
 import { getTextInsight } from '../../lib/api';
-
-const LIKELIHOOD_OPTIONS = [
-  { key: 'uncertain', label: '불확실' },
-  { key: 'ambiguous', label: '애매함' },
-  { key: 'certain', label: '확실' },
-];
 
 export default function FreeNoteField({ form, setField }) {
   const [analyzing, setAnalyzing] = useState(false);
-  const [detection, setDetection] = useState(null); // { label, sourceQuote } | null
-  const [confirmed, setConfirmed] = useState(null); // true | false | null
-  const [likelihood, setLikelihood] = useState(null);
+  const [error, setError] = useState(null);
+  const [analysis, setAnalysis] = useState(null); // { text, categories, abstained, ignored_reason } | null
+  const [statusByEvent, setStatusByEvent] = useState({}); // { [event_id]: 'confirmed' | 'rejected' }
+  const [answersByEvent, setAnswersByEvent] = useState({}); // { [event_id]: { [question_id]: value } }
   const lastAnalyzed = useRef('');
 
-  const resetFollowUp = () => {
-    setDetection(null);
-    setConfirmed(null);
-    setLikelihood(null);
+  // event_answers 제출 API가 기대하는 평평한 배열로 정리해서 form에 반영한다.
+  // '아니요'로 응답한 이벤트는 아예 포함하지 않는다.
+  const syncConfirmedEvents = (status, answers) => {
+    const confirmed = [];
+    (analysis?.categories ?? []).forEach((category) => {
+      category.events.forEach((event) => {
+        if (status[event.event_id] === 'confirmed') {
+          confirmed.push({
+            event_id: event.event_id,
+            label: event.label,
+            label_ko: event.label_ko,
+            answers: answers[event.event_id] ?? {},
+          });
+        }
+      });
+    });
+    setField('confirmedEvents', confirmed);
+  };
+
+  const resetAnalysis = () => {
+    setAnalysis(null);
+    setError(null);
+    setStatusByEvent({});
+    setAnswersByEvent({});
+    setField('confirmedEvents', []);
   };
 
   const handleChange = (value) => {
     setField('note', value);
-    if (value !== lastAnalyzed.current) resetFollowUp();
+    if (value !== lastAnalyzed.current) resetAnalysis();
   };
 
   const runAnalysis = async () => {
@@ -31,19 +48,30 @@ export default function FreeNoteField({ form, setField }) {
     if (!text.trim() || text === lastAnalyzed.current) return;
     lastAnalyzed.current = text;
     setAnalyzing(true);
-    const result = await getTextInsight(text);
-    setAnalyzing(false);
-    setDetection(result);
+    setError(null);
+    try {
+      const result = await getTextInsight(text);
+      setAnalysis(result);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setAnalyzing(false);
+    }
   };
 
-  const handleConfirm = (isCorrect) => {
-    setConfirmed(isCorrect);
-    if (!isCorrect) setField('noteInsight', null);
+  const handleSetStatus = (eventId, status) => {
+    const nextStatus = { ...statusByEvent, [eventId]: status };
+    setStatusByEvent(nextStatus);
+    syncConfirmedEvents(nextStatus, answersByEvent);
   };
 
-  const handleLikelihood = (key) => {
-    setLikelihood(key);
-    setField('noteInsight', { label: detection.label, sourceQuote: detection.sourceQuote, likelihood: key });
+  const handleQuestionChange = (eventId, questionId, value) => {
+    const nextAnswers = {
+      ...answersByEvent,
+      [eventId]: { ...answersByEvent[eventId], [questionId]: value },
+    };
+    setAnswersByEvent(nextAnswers);
+    syncConfirmedEvents(statusByEvent, nextAnswers);
   };
 
   return (
@@ -62,7 +90,7 @@ export default function FreeNoteField({ form, setField }) {
         value={form.note || ''}
         onChange={(e) => handleChange(e.target.value)}
         onBlur={runAnalysis}
-        placeholder="예) 다음 달에 이직해서 월급이 오를 것 같아요"
+        placeholder="예) 2년 뒤에 결혼할 계획이 있어서 결혼 비용이 좀 들 것 같아요"
         rows={4}
         className="w-full resize-none rounded-xl border border-gray-200 px-4 py-3.5 text-base text-gray-900 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
       />
@@ -74,63 +102,38 @@ export default function FreeNoteField({ form, setField }) {
         </div>
       )}
 
-      {!analyzing && detection && confirmed === null && (
-        <div className="mt-4 rounded-2xl border border-violet-100 bg-violet-50 p-5">
-          <div className="flex items-start gap-3">
-            <Sparkles size={18} className="mt-0.5 shrink-0 text-violet-500" />
-            <div>
-              <p className="font-semibold text-violet-700">&ldquo;{detection.label}&rdquo;이 확인되었습니다.</p>
-              <p className="mt-1 text-sm text-violet-500">입력하신 내용이 맞을까요?</p>
-            </div>
-          </div>
-          <div className="mt-4 flex gap-3">
-            <button
-              type="button"
-              onClick={() => handleConfirm(true)}
-              className="flex-1 rounded-xl bg-amber-400 py-2.5 text-sm font-bold text-gray-900 transition hover:bg-amber-500"
-            >
-              맞아요
-            </button>
-            <button
-              type="button"
-              onClick={() => handleConfirm(false)}
-              className="flex-1 rounded-xl border border-gray-200 bg-white py-2.5 text-sm font-bold text-gray-500 transition hover:border-gray-300"
-            >
-              아니에요
-            </button>
-          </div>
+      {!analyzing && error && (
+        <div className="mt-4 flex items-center gap-2 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-400">
+          <CircleSlash2 size={16} className="shrink-0" />
+          문장 분석에 실패했어요 ({error})
         </div>
       )}
 
-      {confirmed === false && (
-        <p className="mt-3 text-xs text-gray-400">알겠어요, 이 내용은 진단에 반영하지 않을게요.</p>
+      {!analyzing && !error && analysis?.abstained && (
+        <div className="mt-4 flex items-center gap-2 rounded-xl bg-gray-50 px-4 py-3 text-sm text-gray-400">
+          <CircleSlash2 size={16} className="shrink-0" />
+          {analysis.ignored_reason ?? '특별히 인식되는 내용이 없어요'}
+        </div>
       )}
 
-      {confirmed === true && !likelihood && (
-        <div className="mt-4 rounded-2xl border border-gray-100 bg-white p-5">
-          <p className="text-sm font-semibold text-gray-700">이 일이 발생할 가능성은 어느 정도인가요?</p>
-          <div className="mt-3 grid grid-cols-3 gap-2">
-            {LIKELIHOOD_OPTIONS.map((opt) => (
-              <button
-                key={opt.key}
-                type="button"
-                onClick={() => handleLikelihood(opt.key)}
-                className="rounded-xl border border-gray-200 py-3 text-sm font-bold text-gray-500 transition hover:border-amber-300 hover:text-gray-700"
-              >
-                {opt.label}
-              </button>
+      {!analyzing &&
+        !error &&
+        !analysis?.abstained &&
+        analysis?.categories.map((category) => (
+          <div key={category.category_id} className="mt-5 first:mt-4">
+            <p className="text-xs font-bold uppercase tracking-wide text-gray-400">{category.category_name}</p>
+            {category.events.map((event) => (
+              <EventCard
+                key={event.event_id}
+                event={event}
+                status={statusByEvent[event.event_id]}
+                onSetStatus={(status) => handleSetStatus(event.event_id, status)}
+                answers={answersByEvent[event.event_id]}
+                onQuestionChange={(questionId, value) => handleQuestionChange(event.event_id, questionId, value)}
+              />
             ))}
           </div>
-        </div>
-      )}
-
-      {confirmed === true && likelihood && (
-        <div className="mt-4 flex items-center gap-2 rounded-xl bg-green-50 px-4 py-3 text-sm font-semibold text-green-700">
-          <CheckCircle2 size={16} className="shrink-0" />
-          &ldquo;{detection.label}&rdquo; · {LIKELIHOOD_OPTIONS.find((o) => o.key === likelihood)?.label}(으)로
-          반영했어요
-        </div>
-      )}
+        ))}
     </div>
   );
 }

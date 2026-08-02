@@ -7,7 +7,7 @@ import DiagnosisForm from './components/DiagnosisForm';
 import ResultPage from './components/ResultPage';
 import SupportPrograms from './components/SupportPrograms';
 import Simulation from './components/Simulation';
-import { diagnose } from './lib/api';
+import { diagnose, submitEventAnswers } from './lib/api';
 
 const pageVariants = {
   initial: { opacity: 0, x: 24 },
@@ -30,6 +30,15 @@ function App() {
     setForm(formData);
     setResult(await diagnose(formData));
     handleNavigate('result');
+
+    // profile_id는 이미 정보입력 2스텝(희망 주거 정보) 완료 시점에 확보되어 있다.
+    // 진단 화면은 로컬 계산으로 이미 그려졌으니 이벤트 답변 제출은 기다리지 않고
+    // 실패해도 화면 흐름이 끊기지 않도록 조용히 콘솔에만 남긴다.
+    if (formData.profileId) {
+      submitEventAnswers(formData.profileId, formData.confirmedEvents ?? []).catch((err) => {
+        console.warn('[persona] 이벤트 제출 실패 (백엔드 미연동 상태일 수 있음):', err.message);
+      });
+    }
   };
 
   const handleRestart = () => {
