@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
 
 export default function WizardShell({
   title,
@@ -9,6 +9,8 @@ export default function WizardShell({
   onNext,
   nextLabel = '다음',
   nextIcon = ArrowRight,
+  isSubmitting = false,
+  errorText = null,
   children,
 }) {
   const NextIcon = nextIcon;
@@ -32,20 +34,25 @@ export default function WizardShell({
 
       <div className="space-y-6">{children}</div>
 
+      {errorText && <p className="mt-6 text-sm font-medium text-rose-500">{errorText}</p>}
+
       <div className="mt-10 flex items-center justify-between border-t border-gray-100 pt-6">
         <button
           type="button"
           onClick={onBack}
-          className="flex items-center gap-1.5 text-sm font-medium text-gray-400 transition hover:text-gray-600"
+          disabled={isSubmitting}
+          className="flex items-center gap-1.5 text-sm font-medium text-gray-400 transition hover:text-gray-600 disabled:opacity-40"
         >
           <ArrowLeft size={16} /> 이전
         </button>
         <button
           type="button"
           onClick={onNext}
-          className="flex items-center gap-2 rounded-xl bg-amber-400 px-6 py-3 text-sm font-bold text-gray-900 transition hover:bg-amber-500"
+          disabled={isSubmitting}
+          className="flex items-center gap-2 rounded-xl bg-amber-400 px-6 py-3 text-sm font-bold text-gray-900 transition hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {nextLabel} <NextIcon size={16} />
+          {isSubmitting ? '제출 중...' : nextLabel}
+          {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <NextIcon size={16} />}
         </button>
       </div>
     </div>

@@ -1,5 +1,9 @@
 import { ChevronDown } from 'lucide-react';
 
+function normalize(opt) {
+  return typeof opt === 'string' ? { value: opt, label: opt } : opt;
+}
+
 export default function SelectField({ label, value, onChange, options }) {
   return (
     <div>
@@ -10,9 +14,9 @@ export default function SelectField({ label, value, onChange, options }) {
           onChange={(e) => onChange(e.target.value)}
           className="w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-3.5 text-base text-gray-900 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
         >
-          {options.map((opt) => (
-            <option key={opt} value={opt}>
-              {opt}
+          {options.map(normalize).map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
             </option>
           ))}
         </select>
