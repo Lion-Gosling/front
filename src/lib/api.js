@@ -3,12 +3,13 @@
 // 출력: Promise)를 유지한 채 내부만 실제 백엔드 fetch 호출로 바꾸면
 // 화면 쪽 코드는 손댈 필요가 없습니다.
 import { getSupportPrograms as getSupportProgramsLocal } from './supportPrograms';
-import { simulateScenarios as simulateScenariosLocal } from './simulate';
 import { getIncomeRecommendation as getIncomeRecommendationLocal } from './recommend';
 import { createPersona as createPersonaRemote } from './persona';
 import { createScenario as createScenarioRemote } from './scenario';
 import { createDiagnosis as createDiagnosisRemote } from './diagnosis';
 import { mapDiagnosisResponse } from './diagnosisMapper';
+import { createTimingComparison as createTimingComparisonRemote } from './timingComparison';
+import { mapTimingComparisonResponse } from './timingComparisonMapper';
 import { fetchBenchmarkTargets } from './benchmarks';
 import { fetchHousingBenchmark as fetchHousingBenchmarkRemote } from './housingBenchmark';
 import { analyzeEventText as analyzeEventTextRemote } from './eventAnalysis';
@@ -27,8 +28,9 @@ export async function getSupportPrograms(form, result) {
 }
 
 export async function getSimulation(form, result) {
-  // 향후: return fetch('/api/simulate', { method: 'POST', body: JSON.stringify({ form, result }) }).then((r) => r.json());
-  return simulateScenariosLocal(form, result);
+  if (!form.scenario?.id) throw new Error('scenario_id가 없습니다 (2번째 스텝이 아직 완료되지 않음)');
+  const raw = await createTimingComparisonRemote(form.scenario.id);
+  return mapTimingComparisonResponse(raw, form);
 }
 
 export async function getIncomeRecommendation(age) {

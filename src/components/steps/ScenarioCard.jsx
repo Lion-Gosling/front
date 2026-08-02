@@ -29,9 +29,9 @@ export default function ScenarioCard({ scenario, recommended, selected, onSelect
           </div>
         </div>
         <div>
-          <div className="text-xs text-gray-400">목표 자산 달성</div>
-          <div className={`text-sm font-bold ${scenario.yearsToGoal ? 'text-green-600' : 'text-gray-400'}`}>
-            {scenario.yearsToGoal ? `${scenario.yearsToGoal.toFixed(1)}년 후 달성` : '기간 내 미달성'}
+          <div className="text-xs text-gray-400">목표 자산 달성 확률</div>
+          <div className={`text-sm font-bold ${scenario.goalProb >= 0.5 ? 'text-green-600' : 'text-gray-400'}`}>
+            {Math.round(scenario.goalProb * 100)}%
           </div>
         </div>
       </div>

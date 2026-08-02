@@ -36,7 +36,7 @@ export default function AssetChart({ series, horizonMonths }) {
   const containerRef = useRef(null);
   const [hoverMonth, setHoverMonth] = useState(null);
 
-  const maxValue = Math.max(...series.flatMap((s) => s.path));
+  const maxValue = Math.max(...series.flatMap((s) => s.bandHigh ?? s.path));
   const ticks = niceTicks(maxValue);
   const niceMax = ticks[ticks.length - 1];
 
@@ -54,6 +54,21 @@ export default function AssetChart({ series, horizonMonths }) {
         ...s,
         d: s.path.map((v, i) => `${i === 0 ? 'M' : 'L'} ${xAt(i)},${yAt(v)}`).join(' '),
       })),
+    [series, horizonMonths, niceMax]
+  );
+
+  const areaPaths = useMemo(
+    () =>
+      series
+        .filter((s) => s.bandLow && s.bandHigh)
+        .map((s) => {
+          const top = s.bandHigh.map((v, i) => `${i === 0 ? 'M' : 'L'} ${xAt(i)},${yAt(v)}`).join(' ');
+          const bottom = s.bandLow
+            .map((v, i) => `${xAt(i)},${yAt(v)}`)
+            .reverse()
+            .join(' L ');
+          return { id: s.id, color: s.color, d: `${top} L ${bottom} Z` };
+        }),
     [series, horizonMonths, niceMax]
   );
 
@@ -148,6 +163,17 @@ export default function AssetChart({ series, horizonMonths }) {
           <line x1={hoverX} x2={hoverX} y1={MARGIN.top} y2={H - MARGIN.bottom} stroke="#c3c2b7" strokeWidth={1} />
         )}
 
+        {areaPaths.map((s) => (
+          <path
+            key={`band-${s.id}`}
+            d={s.d}
+            fill={s.color}
+            fillOpacity={0.12}
+            stroke="none"
+            clipPath={`url(#chart-reveal-${s.id})`}
+          />
+        ))}
+
         {linePaths.map((s) => (
           <path
             key={s.id}
@@ -220,12 +246,19 @@ export default function AssetChart({ series, horizonMonths }) {
         >
           <div className="mb-1 font-semibold text-gray-900">{monthLabel(hoverMonth)}</div>
           {series.map((s) => (
-            <div key={s.id} className="flex items-center gap-2 text-gray-500">
-              <span className="inline-block h-0.5 w-3 rounded-full" style={{ backgroundColor: s.color }} />
-              <span>{s.label}</span>
-              <span className="ml-auto font-semibold text-gray-900">
-                {s.path[hoverMonth].toLocaleString()}만원
-              </span>
+            <div key={s.id} className="mb-1 last:mb-0">
+              <div className="flex items-center gap-2 text-gray-500">
+                <span className="inline-block h-0.5 w-3 rounded-full" style={{ backgroundColor: s.color }} />
+                <span>{s.label}</span>
+                <span className="ml-auto font-semibold text-gray-900">
+                  {s.path[hoverMonth].toLocaleString()}만원
+                </span>
+              </div>
+              {s.bandLow && s.bandHigh && (
+                <div className="pl-5 text-[10px] text-gray-400">
+                  {s.bandLow[hoverMonth].toLocaleString()} ~ {s.bandHigh[hoverMonth].toLocaleString()}만원
+                </div>
+              )}
             </div>
           ))}
         </div>

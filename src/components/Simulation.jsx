@@ -40,6 +40,8 @@ export default function Simulation({ form, result, onBack, onRestart }) {
     id: s.id,
     label: s.label,
     path: s.path,
+    bandLow: s.bandLow,
+    bandHigh: s.bandHigh,
     ...SERIES_STYLE[s.id],
   }));
 
