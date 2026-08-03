@@ -7,6 +7,7 @@
 매물이 아닌 재정을 진단합니다 — 자산·부채·주거비의 확률적 미래를 계산하는 서비스
 
 **2026 제8회 KB AI Challenge** · Team 라이언고슬링 (김가영 · 신지민 · 황규리)
+### 배포 링크 : https://mellifluous-pixie-49f291.netlify.app/
 
 </div>
 
