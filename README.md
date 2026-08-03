@@ -51,7 +51,7 @@
 - **의사결정 리포트**: 목표 달성 확률 · DTI · 주거비 부담률을 종합한 Decision Score와, 사용자 조건 외 대안 조건 비교 제안을 리포트로 제공
 
 ## 시스템 아키텍처
-<img width="976" height="429" alt="image" src="https://github.com/user-attachments/assets/42cde397-4010-4c2e-acbe-5ba04bfdc3b8" />
+<p align="center"><img width="822" height="370" alt="image" src="https://github.com/user-attachments/assets/e525d1fb-948e-4d73-8e54-96d6b2c7177f" />
 
 
 **파이프라인 요약**
