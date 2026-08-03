@@ -16,6 +16,14 @@ function burdenBarTone(tag) {
   return 'bg-red-500';
 }
 
+function goalProbabilityText(probability) {
+  if (probability >= 80) return '충분히 높은 편이에요.';
+  if (probability >= 70) return '꽤 높은 편이에요.';
+  if (probability >= 50) return '반반보다 조금 높아요.';
+  if (probability >= 30) return '아직은 낮은 편이에요.';
+  return '많이 낮은 편이에요.';
+}
+
 export default function ResultPage({ form, result, onCheckSupport }) {
   const tone = GRADE_TONE[result.grade.tone];
   const ToneIcon = tone.Icon;
@@ -47,7 +55,7 @@ export default function ResultPage({ form, result, onCheckSupport }) {
               : '현재 조건은 재정에 부담이 될 수 있어요'}
           </p>
           <p className="mt-1 text-sm text-gray-500">
-            {form.region} · 보증금 {Number(form.deposit).toLocaleString()}만원 · 월세 {form.rent}만원
+            {form.region} · 보증금 {Number(form.deposit).toLocaleString()}원 · 월세 {Number(form.rent).toLocaleString()}원
           </p>
         </div>
       </div>
@@ -76,8 +84,8 @@ export default function ResultPage({ form, result, onCheckSupport }) {
                   <p className="mt-1 text-sm text-amber-700">아래 결과는 이 조건 그대로 계산됐어요.</p>
                   {result.warning.inputRent != null && (
                     <p className="mt-3 text-xs text-amber-700">
-                      입력 월세: {result.warning.inputRent}만원 &nbsp;|&nbsp; 시세 중앙값: {result.warning.medianRent}
-                      만원 &nbsp;|&nbsp; {result.warning.ratioPercent}% 수준
+                      입력 월세: {result.warning.inputRent}원 &nbsp;|&nbsp; 시세 중앙값: {result.warning.medianRent}
+                      원 &nbsp;|&nbsp; {result.warning.ratioPercent}% 수준
                     </p>
                   )}
                 </div>
@@ -91,7 +99,7 @@ export default function ResultPage({ form, result, onCheckSupport }) {
               <div className="mt-2 text-3xl font-extrabold text-gray-900">{result.goalProbability}%</div>
               <p className="mt-2 text-xs leading-relaxed text-gray-500">
                 이대로면 {form.targetYears}년 안에 목표자산을 모을 가능성이{' '}
-                {result.goalProbability >= 50 ? '반반보다 조금 높아요.' : '아직 낮은 편이에요.'}
+                {goalProbabilityText(result.goalProbability)}
               </p>
               <p className="mt-1 text-xs text-gray-400">
                 도중에 한 번이라도 목표를 넘어선 적 있는 확률: {result.touchProbability}%
@@ -127,7 +135,7 @@ export default function ResultPage({ form, result, onCheckSupport }) {
               <div>
                 <div className="text-sm text-gray-400">독립 시점 필요 목돈</div>
                 <div className="mt-2 text-2xl font-extrabold text-gray-900">
-                  {result.requiredFunds.requiredFunds.toLocaleString()}만원
+                  {result.requiredFunds.requiredFunds.toLocaleString()}원
                 </div>
               </div>
               <div>
@@ -137,7 +145,7 @@ export default function ResultPage({ form, result, onCheckSupport }) {
                   {result.requiredFunds.sufficient && (
                     <span className="flex items-center gap-1 rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">
                       <CheckCircle2 size={14} />
-                      보유 현금 {result.requiredFunds.cashOnHand.toLocaleString()}만원으로 충분해요
+                      보유 현금 {result.requiredFunds.cashOnHand.toLocaleString()}원으로 충분해요
                     </span>
                   )}
                 </div>
@@ -194,8 +202,7 @@ export default function ResultPage({ form, result, onCheckSupport }) {
             </div>
             {result.regionComparison.excluded.length > 0 && (
               <p className="mt-3 text-xs text-gray-400">
-                {result.regionComparison.excluded.map((e) => `${e.region}은 ${e.reason}`).join(', ')} 비교에서
-                제외했어요.
+                
               </p>
             )}
           </div>

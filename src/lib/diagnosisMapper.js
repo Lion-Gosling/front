@@ -38,6 +38,28 @@ function mapWhatIfScenarios(raw) {
   }));
 }
 
+// TODO: 백엔드가 아직 district_comparisons를 안 내려줄 때를 위한 임시 목데이터.
+// 마포구 기준 실제 인접 자치구를, 이 진단의 실제 goal_probability에 시세 상대적 차이(대략치)만큼
+// 가감해서 채운다. district_comparisons가 내려오기 시작하면 이 폴백은 제거.
+const MOCK_NEIGHBOR_OFFSETS_BY_DISTRICT = {
+  마포구: [
+    { region: '서대문구', offset: 8 }, // 마포구보다 시세가 낮은 편
+    { region: '은평구', offset: 14 }, // 마포구보다 시세가 눈에 띄게 낮은 편
+    { region: '영등포구', offset: -4 }, // 마포구와 비슷하거나 약간 높은 편
+    { region: '용산구', offset: -18 }, // 마포구보다 시세가 높은 편
+  ],
+};
+
+function mockNeighbors(raw, form) {
+  const offsets = MOCK_NEIGHBOR_OFFSETS_BY_DISTRICT[form.district];
+  if (!offsets) return [];
+  const base = pct(raw.goal_probability);
+  return offsets.map(({ region, offset }) => ({
+    region,
+    probability: Math.min(100, Math.max(0, base + offset)),
+  }));
+}
+
 function mapRegionComparison(raw, form) {
   const list = raw.district_comparisons ?? [];
   const neighbors = list
@@ -48,7 +70,7 @@ function mapRegionComparison(raw, form) {
     .map((d) => ({ region: d.district, reason: d.realism?.warning || '비교 데이터 부족' }));
   return {
     current: { region: form.district, probability: pct(raw.goal_probability) },
-    neighbors,
+    neighbors: neighbors.length > 0 ? neighbors : mockNeighbors(raw, form),
     excluded,
   };
 }
@@ -77,3 +99,4 @@ export function mapDiagnosisResponse(raw, form) {
     assumptions: raw.assumptions ?? [],
   };
 }
+

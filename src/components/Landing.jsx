@@ -16,7 +16,7 @@ const TRUST_ITEMS = [
   { icon: ShieldCheck, label: 'KB국민은행 제휴' },
   { icon: Lock, label: '데이터 안전 보호' },
   { icon: Clock, label: '3분이면 충분' },
-  { icon: CheckCircle2, label: '10만 명 이상 이용' },
+  { icon: CheckCircle2, label: '국가 통계 기반' },
 ];
 
 const FEATURES = [
@@ -40,7 +40,7 @@ const FEATURES = [
     icon: Gift,
     step: 'STEP 3',
     title: '맞춤 추천',
-    desc: '놓치고 있는 지원제도와 금융상품을 추천해드리고, 예상 절감 효과까지 계산해드려요.',
+    desc: '내 조건에 맞는 청년 지원제도와 KB 금융상품 중 놓치고 있던 것만 골라 추천해드려요.',
     bg: 'bg-teal-100',
     text: 'text-teal-600',
   },
@@ -60,17 +60,17 @@ export default function Landing({ onStart }) {
       <section className="mx-auto max-w-4xl px-6 pb-20 pt-16 text-center">
         <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-600">
           <Sparkles size={16} />
-          AI 기반 주거·금융 진단 서비스
+          AI 기반 사회초년생 미래자산 시뮬레이션
         </div>
 
         <h1 className="text-4xl font-extrabold leading-tight text-gray-900 md:text-5xl">
-          내 집 마련, <span className="text-amber-400">지금이 적기일까?</span>
+          독립, <span className="text-amber-400">지금이 적기일까?</span>
         </h1>
 
         <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-gray-500 md:text-lg">
-          단순 매물 추천이 아닌, 내 재정 상황과 미래 목표를 함께 고려한
+          단순 매물 추천이 아닌, 내 재정 상황을 진단하고 독립 시점에 따른 미래 자산까지 시뮬레이션하는
           <br />
-          <span className="font-bold text-gray-800">AI 맞춤형 주거금융 건강검진</span>을 받아보세요.
+          <span className="font-bold text-gray-800">AI 맞춤형 독립 준비 진단</span>을 받아보세요.
         </p>
 
         <button

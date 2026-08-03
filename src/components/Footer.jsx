@@ -10,7 +10,7 @@ export default function Footer() {
               <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-400 text-white">
                 <Home size={18} strokeWidth={2.5} />
               </span>
-              <span className="text-[15px] font-bold text-gray-900">주거금융 건강검진</span>
+              <span className="text-[15px] font-bold text-gray-900">Kapable</span>
             </div>
             <p className="max-w-sm text-sm leading-relaxed text-gray-500">
               청년 사회초년생을 위한 AI 기반 주거·금융 의사결정 서비스입니다. 재정 상황과 미래
