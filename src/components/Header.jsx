@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import logoMark from '../assets/logo-mark.svg';
 
 export default function Header({ onNavigate }) {
   return (
@@ -9,19 +9,14 @@ export default function Header({ onNavigate }) {
           onClick={() => onNavigate?.('landing')}
           className="flex items-center gap-3 text-left"
         >
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-400 text-white">
-            <Home size={20} strokeWidth={2.5} />
-          </span>
-          <span className="leading-tight">
-            <span className="block text-[15px] font-bold text-gray-900">주거금융 건강검진</span>
-            <span className="block text-xs text-gray-400">by KB국민은행</span>
-          </span>
+          <img src={logoMark} alt="Kapable" className="h-7 w-auto" />
+          <span className="block text-xs text-gray-400"></span>
         </button>
 
         <nav className="hidden items-center gap-8 text-sm text-gray-600 md:flex">
-          <a href="#features" className="hover:text-gray-900">서비스 소개</a>
-          <a href="#support" className="hover:text-gray-900">지원제도</a>
-          <a href="#faq" className="hover:text-gray-900">FAQ</a>
+          <a href="#features" className="hover:text-gray-900"></a>
+          <a href="#support" className="hover:text-gray-900"></a>
+          <a href="#faq" className="hover:text-gray-900"></a>
         </nav>
 
         <button
